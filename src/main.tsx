@@ -11,10 +11,17 @@ createRoot(document.getElementById("root")!).render(
     <Provider store={store}>
       <div className="flex min-h-screen flex-col pb-[env(safe-area-inset-bottom)]">
         <App />
-        <Toaster richColors position="top-center" />
+        <Toaster position="bottom-center" />
         {/* Footer */}
         <footer className="mt-auto py-10 text-center text-xs text-muted-foreground">
-          <span className="mr-2">🎱</span> Score Tracker — Made with by Kirin
+          <span className="mr-2">🎱</span> Score Tracker — Made with by{" "}
+          <a
+            href="https://www.facebook.com/ebs.bi/"
+            className="text-blue-500"
+            target="_blank"
+          >
+            Minh Nhân
+          </a>
         </footer>
       </div>
     </Provider>

@@ -63,8 +63,8 @@ const PlayerForm: React.FC = () => {
   };
 
   return (
-    <div className="pt-[env(safe-area-inset-top)] px-2">
-      <Card className="w-full max-w-md my-20">
+    <div className="pt-[env(safe-area-inset-top)] px-2 md:w-2/3 md:mx-auto">
+      <Card className="w-full my-20">
         <CardHeader>
           <CardTitle>Chọn số người chơi & setup điểm</CardTitle>
         </CardHeader>

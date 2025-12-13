@@ -78,8 +78,8 @@ const ScoreBoard: React.FC = () => {
   };
 
   return (
-    <div className="pt-[env(safe-area-inset-top)] px-2">
-      <Card className="w-full max-w-md my-20">
+    <div className="pt-[env(safe-area-inset-top)] px-2 md:w-2/3 md:mx-auto">
+      <Card className="w-full my-20">
         <CardHeader>
           <CardTitle>🎱 Tính điểm đền</CardTitle>
         </CardHeader>
@@ -163,7 +163,10 @@ const ScoreBoard: React.FC = () => {
             <Button
               className="flex-1"
               variant="outline"
-              onClick={() => dispatch(undo())}
+              onClick={() => {
+                toast.success("Hoàn tác thành công");
+                dispatch(undo());
+              }}
               disabled={history.length === 0}
             >
               Undo
