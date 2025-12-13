@@ -63,69 +63,75 @@ const PlayerForm: React.FC = () => {
   };
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle>Chọn số người chơi & setup điểm</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Chọn 3 hoặc 4 người */}
-        <div className="flex space-x-2">
-          <Button
-            variant={playerCount === 3 ? "default" : "outline"}
-            className="flex-1"
-            onClick={() => setPlayerCount(3)}
-          >
-            3 Người
-          </Button>
-          <Button
-            variant={playerCount === 4 ? "default" : "outline"}
-            className="flex-1"
-            onClick={() => setPlayerCount(4)}
-          >
-            4 Người
-          </Button>
-        </div>
+    <div className="pt-[env(safe-area-inset-top)] px-2">
+      <Card className="w-full max-w-md my-20">
+        <CardHeader>
+          <CardTitle>Chọn số người chơi & setup điểm</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Chọn 3 hoặc 4 người */}
+          <div className="flex space-x-2">
+            <Button
+              variant={playerCount === 3 ? "default" : "outline"}
+              className="flex-1"
+              onClick={() => setPlayerCount(3)}
+            >
+              3 Người
+            </Button>
+            <Button
+              variant={playerCount === 4 ? "default" : "outline"}
+              className="flex-1"
+              onClick={() => setPlayerCount(4)}
+            >
+              4 Người
+            </Button>
+          </div>
 
-        {/* Nhập tên người chơi */}
-        <div className="space-y-2">
-          {Array(playerCount)
-            .fill(0)
-            .map((_, i) => (
-              <div key={i}>
-                <Label>Người chơi {i + 1}</Label>
+          {/* Nhập tên người chơi */}
+          <div className="space-y-4">
+            {Array(playerCount)
+              .fill(0)
+              .map((_, i) => (
+                <div key={i}>
+                  <Label className="mb-4">Người chơi {i + 1}</Label>
+                  <Input
+                    value={names[i]}
+                    onChange={(e) => handleNameChange(i, e.target.value)}
+                    placeholder={`Tên người chơi ${i + 1}`}
+                  />
+                </div>
+              ))}
+          </div>
+
+          {/* Setup điểm cho các mức đền */}
+          <div className="space-y-4">
+            <Label className="my-6">Setup điểm cho các mức đền</Label>
+            {penaltyPoints.map((p) => (
+              <div key={p.key} className="flex items-center space-x-2">
+                <span>Bi {p.key}</span>
                 <Input
-                  value={names[i]}
-                  onChange={(e) => handleNameChange(i, e.target.value)}
-                  placeholder={`Tên người chơi ${i + 1}`}
+                  type="number"
+                  value={p.value}
+                  onChange={(e) =>
+                    handlePenaltyChange(p.key, parseInt(e.target.value) || 0)
+                  }
+                  className="w-20"
                 />
+                <span>điểm</span>
               </div>
             ))}
-        </div>
+          </div>
 
-        {/* Setup điểm cho các mức đền */}
-        <div className="space-y-2">
-          <Label>Setup điểm cho các mức đền</Label>
-          {penaltyPoints.map((p) => (
-            <div key={p.key} className="flex items-center space-x-2">
-              <span>Bi {p.key}</span>
-              <Input
-                type="number"
-                value={p.value}
-                onChange={(e) =>
-                  handlePenaltyChange(p.key, parseInt(e.target.value) || 0)
-                }
-                className="w-20"
-              />
-              <span>điểm</span>
-            </div>
-          ))}
-        </div>
-
-        <Button className="w-full mt-2" onClick={handleStart}>
-          Bắt đầu
-        </Button>
-      </CardContent>
-    </Card>
+          <Button
+            className="w-full mt-2"
+            onClick={handleStart}
+            variant={"success"}
+          >
+            Bắt đầu
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
