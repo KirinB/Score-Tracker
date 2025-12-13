@@ -14,7 +14,7 @@ createRoot(document.getElementById("root")!).render(
         <Toaster position="bottom-center" />
         {/* Footer */}
         <footer className="mt-auto py-10 text-center text-xs text-muted-foreground">
-          <span className="mr-2">🎱</span> Score Tracker — Made with by{" "}
+          <span className="mr-2">🎱</span> Score Tracker — Made with ❤️ by{" "}
           <a
             href="https://www.facebook.com/ebs.bi/"
             className="text-blue-500"
