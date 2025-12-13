@@ -29,8 +29,9 @@ import {
 
 const ScoreBoard: React.FC = () => {
   const dispatch = useDispatch();
-  const { players, currentPlayerId, round, history, penaltyPoints } =
-    useSelector((state: RootState) => state.game);
+  const { players, currentPlayerId, history, penaltyPoints } = useSelector(
+    (state: RootState) => state.game
+  );
 
   const [selectedBi, setSelectedBi] = useState<number[]>([]);
   const [selectedLosers, setSelectedLosers] = useState<number[]>([]);
