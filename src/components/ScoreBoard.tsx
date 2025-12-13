@@ -26,6 +26,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "./ui/alert-dialog";
+import { toast } from "sonner";
 
 const ScoreBoard: React.FC = () => {
   const dispatch = useDispatch();
@@ -57,16 +58,21 @@ const ScoreBoard: React.FC = () => {
   // Áp dụng penalty
   const handleApply = () => {
     if (selectedLosers.length === 0) {
-      alert("Vui lòng chọn người bị đền");
+      toast.error("Vui lòng chọn người bị đền");
       return;
     }
     if (selectedBi.length === 0) {
-      alert("Vui lòng chọn mức bi (3,6,9)");
+      toast.error("Vui lòng chọn mức bi (3,6,9)");
       return;
     }
     dispatch(
       applyPenalty({ loserIds: selectedLosers, penaltyKeys: selectedBi })
     );
+    toast.success("Ghi điểm thành công", {
+      description: `Bi: ${selectedBi.join(", ")} | Người đền: ${selectedLosers
+        .map((id) => players.find((p) => p.id === id)?.name)
+        .join(", ")}`,
+    });
     setSelectedBi([]);
     setSelectedLosers([]);
   };
