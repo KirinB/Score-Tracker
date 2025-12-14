@@ -27,6 +27,7 @@ import {
   AlertDialogTrigger,
 } from "./ui/alert-dialog";
 import { toast } from "sonner";
+import ScoreHistory from "./ScoreHistory";
 
 const ScoreBoard: React.FC = () => {
   const dispatch = useDispatch();
@@ -80,8 +81,10 @@ const ScoreBoard: React.FC = () => {
   return (
     <div className="pt-[env(safe-area-inset-top)] px-2 md:w-2/3 md:mx-auto">
       <Card className="w-full my-20">
-        <CardHeader>
+        <CardHeader className="flex justify-between items-center">
           <CardTitle>🎱 Tính điểm đền</CardTitle>
+
+          <ScoreHistory />
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Bảng điểm */}
