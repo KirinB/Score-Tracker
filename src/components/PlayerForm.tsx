@@ -60,7 +60,6 @@ const PlayerForm: React.FC = () => {
     handleSubmit,
     control,
     setValue,
-    watch,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(PlayerFormSchema),
