@@ -164,6 +164,7 @@ const ScoreBoard: React.FC = () => {
                     size="icon"
                     variant="outline"
                     onClick={() => changeBiCount(bi, -1)}
+                    disabled={biCounts[bi] === 0} // <-- disable khi count = 0
                   >
                     −
                   </Button>
