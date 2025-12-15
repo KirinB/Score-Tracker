@@ -98,6 +98,8 @@ const PlayerForm: React.FC = () => {
     toast.success("Đã bắt đầu trò chơi!");
   };
 
+  console.log(errors);
+
   return (
     <div className="pt-[env(safe-area-inset-top)] px-2 md:w-2/3 md:mx-auto">
       <Card className="w-full mt-6">
@@ -173,6 +175,10 @@ const PlayerForm: React.FC = () => {
                         type="number"
                         className="w-20"
                         min={0}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          field.onChange(isNaN(val) ? 0 : val);
+                        }}
                       />
                     )}
                   />
