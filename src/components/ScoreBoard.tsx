@@ -1,20 +1,18 @@
 import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import type { RootState } from "@/stores";
+
 import {
   applyPenalty,
   resetAll,
   undo,
   setCurrentPlayer,
 } from "@/stores/slices/game.slice";
-import imgCue from "@/assets/cue.png";
-import imgBi3 from "@/assets/bi3.png";
-import imgBi6 from "@/assets/bi6.png";
-import imgBi9 from "@/assets/bi9.png";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,155 +23,197 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "./ui/alert-dialog";
+} from "@/components/ui/alert-dialog";
+
 import { toast } from "sonner";
 import ScoreHistory from "./ScoreHistory";
 
+import imgCue from "@/assets/cue.png";
+import imgBi3 from "@/assets/bi3.png";
+import imgBi6 from "@/assets/bi6.png";
+import imgBi9 from "@/assets/bi9.png";
+
+/* ================= TYPES ================= */
+
+export type BiKey = 3 | 6 | 9;
+
+/** QUAN TRỌNG: dùng const array thay cho Object.keys */
+const BI_KEYS: readonly BiKey[] = [3, 6, 9] as const;
+
+const biImages: Record<BiKey, string> = {
+  3: imgBi3,
+  6: imgBi6,
+  9: imgBi9,
+};
+
+/* ================= COMPONENT ================= */
+
 const ScoreBoard: React.FC = () => {
   const dispatch = useDispatch();
-  const { players, currentPlayerId, history, penaltyPoints } = useSelector(
+  const { players, currentPlayerId, history } = useSelector(
     (state: RootState) => state.game
   );
 
-  const [selectedBi, setSelectedBi] = useState<number[]>([]);
-  const [selectedLosers, setSelectedLosers] = useState<number[]>([]);
+  /** mỗi bi có count riêng */
+  const [biCounts, setBiCounts] = useState<Record<BiKey, number>>({
+    3: 0,
+    6: 0,
+    9: 0,
+  });
 
-  // Toggle chọn bi 3,6,9
-  const toggleBi = (val: number) => {
-    if (selectedBi.includes(val)) {
-      setSelectedBi(selectedBi.filter((b) => b !== val));
-    } else {
-      setSelectedBi([...selectedBi, val]);
-    }
-  };
+  const [loserIds, setLoserIds] = useState<number[]>([]);
 
-  // Toggle chọn người bị đền
+  /* ---------- helpers ---------- */
+
   const toggleLoser = (id: number) => {
-    if (selectedLosers.includes(id)) {
-      setSelectedLosers(selectedLosers.filter((l) => l !== id));
-    } else {
-      setSelectedLosers([...selectedLosers, id]);
-    }
+    setLoserIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
   };
 
-  // Áp dụng penalty
-  const handleApply = () => {
-    if (selectedLosers.length === 0) {
-      toast.error("Vui lòng chọn người bị đền");
-      return;
-    }
-    if (selectedBi.length === 0) {
-      toast.error("Vui lòng chọn mức bi (3,6,9)");
-      return;
-    }
-    dispatch(
-      applyPenalty({ loserIds: selectedLosers, penaltyKeys: selectedBi })
-    );
-    toast.success("Ghi điểm thành công", {
-      description: `Bi: ${selectedBi.join(", ")} | Người đền: ${selectedLosers
-        .map((id) => players.find((p) => p.id === id)?.name)
-        .join(", ")}`,
-    });
-    setSelectedBi([]);
-    setSelectedLosers([]);
+  const changeBiCount = (bi: BiKey, delta: 1 | -1) => {
+    setBiCounts((prev) => ({
+      ...prev,
+      [bi]: Math.max(0, prev[bi] + delta),
+    }));
   };
+
+  const resetSelection = () => {
+    setLoserIds([]);
+    setBiCounts({ 3: 0, 6: 0, 9: 0 });
+  };
+
+  /* ---------- submit ---------- */
+
+  const handleApply = () => {
+    const events = BI_KEYS.filter((bi) => biCounts[bi] > 0).map((bi) => ({
+      bi,
+      count: biCounts[bi],
+    }));
+
+    if (loserIds.length === 0) {
+      toast.error("Chưa chọn người bị đền");
+      return;
+    }
+
+    if (events.length === 0) {
+      toast.error("Chưa chọn bi");
+      return;
+    }
+
+    dispatch(
+      applyPenalty({
+        loserIds,
+        events,
+      })
+    );
+
+    toast.success("Đã ghi điểm");
+    resetSelection();
+  };
+
+  /* ---------- render ---------- */
 
   return (
     <div className="pt-[env(safe-area-inset-top)] px-2 md:w-2/3 md:mx-auto">
-      <Card className="w-full my-20">
-        <CardHeader className="flex justify-between items-center">
+      <Card className="my-20">
+        <CardHeader className="flex flex-row justify-between items-center">
           <CardTitle>🎱 Tính điểm đền</CardTitle>
-
           <ScoreHistory />
         </CardHeader>
+
         <CardContent className="space-y-4">
-          {/* Bảng điểm */}
+          {/* ===== BẢNG ĐIỂM ===== */}
           {players.map((p) => (
             <div
               key={p.id}
-              className={`flex justify-between items-center px-3 py-2 rounded cursor-pointer
-                  ${
-                    p.id === currentPlayerId
-                      ? "border-2 border-blue-500 bg-blue-50 font-bold"
-                      : "border"
-                  }
-                  `}
               onClick={() => dispatch(setCurrentPlayer(p.id))}
+              className={`flex justify-between items-center px-3 py-2 rounded cursor-pointer
+                ${
+                  p.id === currentPlayerId
+                    ? "border-2 border-blue-500 bg-blue-50 font-bold"
+                    : "border"
+                }`}
             >
-              <div className="flex items-center space-x-2">
-                <span>{p.name}</span>
+              <div className="flex items-center gap-2">
+                {p.name}
                 {p.id === currentPlayerId && (
-                  <img src={imgCue} alt="Cue" className="w-5 h-5" />
+                  <img src={imgCue} className="w-5 h-5" />
                 )}
               </div>
               <span>{p.score}</span>
             </div>
           ))}
 
-          {/* Chọn mức bi */}
-          <div className="space-y-1">
+          {/* ===== CHỌN BI ===== */}
+          <div className="space-y-2">
             <Label>Mức bi</Label>
-            <div className="flex space-x-2">
-              {penaltyPoints.map((p) => {
-                let imgSrc;
-                if (p.key === 3) imgSrc = imgBi3;
-                else if (p.key === 6) imgSrc = imgBi6;
-                else if (p.key === 9) imgSrc = imgBi9;
 
-                return (
+            {BI_KEYS.map((bi) => (
+              <div
+                key={bi}
+                className="flex items-center justify-between border rounded p-2"
+              >
+                <div className="flex items-center gap-2">
+                  <img src={biImages[bi]} className="w-5 h-5" />
+                  <span>Bi {bi}</span>
+                </div>
+
+                <div className="flex items-center gap-2">
                   <Button
-                    key={p.key}
-                    variant={selectedBi.includes(p.key) ? "default" : "outline"}
-                    onClick={() => toggleBi(p.key)}
-                    className="flex-1 flex items-center justify-center space-x-1"
+                    size="icon"
+                    variant="outline"
+                    onClick={() => changeBiCount(bi, -1)}
                   >
-                    {imgSrc && (
-                      <img
-                        src={imgSrc}
-                        alt={`Bi ${p.key}`}
-                        className="w-5 h-5"
-                      />
-                    )}
-                    <span>{p.key}</span>
+                    −
                   </Button>
-                );
-              })}
-            </div>
+
+                  <span className="w-6 text-center">{biCounts[bi]}</span>
+
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    onClick={() => changeBiCount(bi, 1)}
+                  >
+                    +
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
 
-          {/* Chọn người bị đền */}
+          {/* ===== NGƯỜI BỊ ĐỀN ===== */}
           <div className="space-y-1">
             <Label>Người bị đền</Label>
-            <div className="flex flex-col space-y-1">
-              {players
-                .filter((p) => p.id !== currentPlayerId)
-                .map((p) => (
-                  <Button
-                    key={p.id}
-                    variant={
-                      selectedLosers.includes(p.id) ? "default" : "outline"
-                    }
-                    onClick={() => toggleLoser(p.id)}
-                  >
-                    {p.name}
-                  </Button>
-                ))}
-            </div>
+
+            {players
+              .filter((p) => p.id !== currentPlayerId)
+              .map((p) => (
+                <Button
+                  key={p.id}
+                  variant={loserIds.includes(p.id) ? "default" : "outline"}
+                  onClick={() => toggleLoser(p.id)}
+                  className="w-full"
+                >
+                  {p.name}
+                </Button>
+              ))}
           </div>
 
-          {/* Action buttons */}
-          <div className="flex space-x-2">
+          {/* ===== ACTION ===== */}
+          <div className="flex gap-2">
             <Button
               className="flex-1"
               variant="outline"
-              onClick={() => {
-                toast.success("Hoàn tác thành công");
-                dispatch(undo());
-              }}
               disabled={history.length === 0}
+              onClick={() => {
+                dispatch(undo());
+                toast.success("Hoàn tác");
+              }}
             >
               Undo
             </Button>
+
             <Button
               className="flex-1"
               onClick={handleApply}
@@ -183,26 +223,26 @@ const ScoreBoard: React.FC = () => {
             </Button>
           </div>
 
+          {/* ===== RESET ===== */}
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button className="w-full mt-2" variant="destructive">
+              <Button variant="destructive" className="w-full">
                 Reset
               </Button>
             </AlertDialogTrigger>
 
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Bạn có chắc chắn?</AlertDialogTitle>
+                <AlertDialogTitle>Bạn chắc chứ?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Hành động này sẽ xoá toàn bộ điểm số và danh sách người chơi.
-                  Dữ liệu không thể khôi phục.
+                  Toàn bộ dữ liệu sẽ bị xoá và không thể khôi phục.
                 </AlertDialogDescription>
               </AlertDialogHeader>
 
               <AlertDialogFooter>
                 <AlertDialogCancel>Huỷ</AlertDialogCancel>
                 <AlertDialogAction
-                  className="bg-destructive text-white hover:bg-destructive/90"
+                  className="bg-destructive text-white"
                   onClick={() => dispatch(resetAll())}
                 >
                   Reset

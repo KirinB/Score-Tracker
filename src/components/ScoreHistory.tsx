@@ -14,6 +14,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
 import { undoToIndex } from "@/stores/slices/game.slice";
+import { renderEventText } from "@/lib/helper";
 
 const PAGE_SIZE = 5; // số lượt mỗi trang
 
@@ -39,18 +40,21 @@ const ScoreHistory: React.FC = () => {
 
   const { players, history } = gameState;
 
-  // Đảo ngược mảng để lượt mới nhất lên đầu
-  const reversedHistory = [...history].reverse();
-  const totalPages = Math.ceil(reversedHistory.length / PAGE_SIZE);
-  const pageHistory = reversedHistory.slice(
-    page * PAGE_SIZE,
-    (page + 1) * PAGE_SIZE
-  );
+  const totalPages = Math.ceil(history.length / PAGE_SIZE);
+
+  // === sort DESC theo createdAt để lượt mới nhất lên đầu ===
+  const sortedHistory = [...history].sort((a, b) => b.createdAt - a.createdAt);
+  const start = page * PAGE_SIZE;
+  const end = start + PAGE_SIZE;
+  const pageHistory = sortedHistory.slice(start, end);
 
   const handleDelete = (index: number) => {
-    const originalIndex = history.length - 1 - index; // map lại index gốc trong history
-    const entry = history[originalIndex];
-    if (!entry || !Array.isArray(entry.loserIds)) return;
+    const entry = pageHistory[index];
+    if (!entry) return;
+
+    // tìm index gốc trong history
+    const originalIndex = history.findIndex((h) => h.id === entry.id);
+    if (originalIndex === -1) return;
 
     const winnerName =
       players.find((p) => p.id === entry.currentPlayerId)?.name ?? "??";
@@ -85,28 +89,31 @@ const ScoreHistory: React.FC = () => {
           {history.length === 0 && <p>Chưa có lượt nào.</p>}
 
           {pageHistory.map((h, i) => {
-            if (!h || !Array.isArray(h.loserIds)) return null;
-
             const losers =
               players.find((p) => p.id === h.currentPlayerId)?.name ?? "??";
             const winner = h.loserIds
               .map((id) => players.find((p) => p.id === id)?.name ?? "??")
               .join(", ");
 
+            // # tính theo sortedHistory
+            const number = sortedHistory.length - (page * PAGE_SIZE + i);
+
             return (
               <div
-                key={i + page * PAGE_SIZE}
+                key={h.id}
                 className="flex justify-between items-center border p-2 rounded"
               >
-                <p>
-                  #{history.length - (page * PAGE_SIZE + i)}:{" "}
-                  <strong>{winner}</strong> đền <strong>{losers}</strong>{" "}
-                  {h.totalPoints} điểm
+                <p className="text-sm leading-relaxed">
+                  #{number}: <strong>{winner}</strong> đền{" "}
+                  <strong>{losers}</strong>{" "}
+                  <span className="text-muted-foreground">
+                    ({renderEventText(h.events)})
+                  </span>
                 </p>
                 <Button
                   variant="destructive"
                   size="icon"
-                  onClick={() => handleDelete(i + page * PAGE_SIZE)}
+                  onClick={() => handleDelete(i)}
                 >
                   <TrashIcon />
                 </Button>

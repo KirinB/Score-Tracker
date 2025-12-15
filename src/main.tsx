@@ -9,7 +9,7 @@ import { Toaster } from "@/components/ui/sonner";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Provider store={store}>
-      <div className="flex min-h-screen flex-col pb-[env(safe-area-inset-bottom)]">
+      <div className="flex flex-col pb-[env(safe-area-inset-bottom)]">
         <App />
         <Toaster position="bottom-center" />
         {/* Footer */}
