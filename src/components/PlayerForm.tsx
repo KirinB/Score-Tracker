@@ -72,8 +72,8 @@ const PlayerForm: React.FC = () => {
     mode: "onSubmit",
   });
 
-  const watchedNames = watch("names");
-  const watchedPenaltyPoints = watch("penaltyPoints");
+  // const watchedNames = watch("names");
+  // const watchedPenaltyPoints = watch("penaltyPoints");
 
   useEffect(() => {
     const storedPoints = localStorage.getItem("penaltyPoints");
