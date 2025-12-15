@@ -1,6 +1,7 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-// Types
+export type BiKey = 3 | 6 | 9;
+
 export type Player = {
   id: number;
   name: string;
@@ -8,34 +9,40 @@ export type Player = {
 };
 
 export type PenaltyPoint = {
-  key: number; // bi 3,6,9
-  value: number; // số điểm
+  key: BiKey;
+  value: number;
+};
+
+export type PenaltyEvent = {
+  bi: BiKey;
+  count: number;
 };
 
 export type HistoryEntry = {
-  currentPlayerId: number; // người được điểm
-  loserIds: number[]; // người mất điểm
-  penaltyKeys: number[]; // bi 3,6,9
-  totalPoints: number; // tổng điểm được / mất
+  id: string;
+  currentPlayerId: number;
+  loserIds: number[];
+  events: PenaltyEvent[];
+  totalPoints: number;
+  createdAt: number;
 };
 
 export type GameState = {
+  version: number;
   players: Player[];
   currentPlayerId: number;
   history: HistoryEntry[];
-  round: number;
   penaltyPoints: PenaltyPoint[];
 };
 
-// LocalStorage key
-const STORAGE_KEY = "9bi_game_state";
+const STORAGE_KEY = "9bi_game_state_v2";
+const CURRENT_VERSION = 1;
 
-// Initial state mặc định
 const initialState: GameState = {
+  version: CURRENT_VERSION,
   players: [],
   currentPlayerId: 0,
   history: [],
-  round: 1,
   penaltyPoints: [
     { key: 3, value: 1 },
     { key: 6, value: 2 },
@@ -43,13 +50,20 @@ const initialState: GameState = {
   ],
 };
 
-// Load state từ localStorage, validate
+/** Load state an toàn, tự reset nếu dữ liệu cũ hoặc lỗi */
 function loadState(): GameState {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return initialState;
-
   try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return initialState;
+
     const parsed = JSON.parse(raw) as Partial<GameState>;
+
+    // Kiểm tra version
+    if (parsed.version !== CURRENT_VERSION) {
+      localStorage.removeItem(STORAGE_KEY);
+      return initialState;
+    }
+
     return {
       ...initialState,
       ...parsed,
@@ -60,76 +74,72 @@ function loadState(): GameState {
         : initialState.penaltyPoints,
       currentPlayerId:
         typeof parsed.currentPlayerId === "number" ? parsed.currentPlayerId : 0,
-      round: typeof parsed.round === "number" ? parsed.round : 1,
     };
   } catch {
-    console.warn("Invalid game state in localStorage, resetting...");
     localStorage.removeItem(STORAGE_KEY);
     return initialState;
   }
 }
 
-// Save state vào localStorage
 function saveState(state: GameState) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
-// Slice
 const gameSlice = createSlice({
   name: "game",
   initialState: loadState(),
   reducers: {
     setPlayers(state, action: PayloadAction<Player[]>) {
-      state.players = action.payload;
-      state.currentPlayerId = action.payload[0]?.id || 0;
+      state.players = action.payload.map((p) => ({ ...p, score: 0 }));
+      state.currentPlayerId = action.payload[0]?.id ?? 0;
       state.history = [];
-      state.round = 1;
       saveState(state);
     },
-    setPenaltyPoints(state, action: PayloadAction<PenaltyPoint[]>) {
-      state.penaltyPoints = action.payload;
-      saveState(state);
-    },
-    nextRound(state) {
-      state.players = state.players.map((p) => ({ ...p, score: 0 }));
-      state.currentPlayerId = state.players[0]?.id || 0;
-      state.history = [];
-      state.round += 1;
-      saveState(state);
-    },
+
     setCurrentPlayer(state, action: PayloadAction<number>) {
       state.currentPlayerId = action.payload;
       saveState(state);
     },
+
+    setPenaltyPoints(state, action: PayloadAction<PenaltyPoint[]>) {
+      state.penaltyPoints = action.payload;
+      saveState(state);
+    },
+
     applyPenalty(
       state,
-      action: PayloadAction<{ loserIds: number[]; penaltyKeys: number[] }>
+      action: PayloadAction<{ loserIds: number[]; events: PenaltyEvent[] }>
     ) {
-      const { loserIds, penaltyKeys } = action.payload;
-      const totalPenalty = penaltyKeys.reduce((sum, key) => {
-        const p = state.penaltyPoints.find((pp) => pp.key === key);
-        return p ? sum + p.value : sum;
+      const { loserIds, events } = action.payload;
+      const totalPoints = events.reduce((sum, ev) => {
+        const point =
+          state.penaltyPoints.find((p) => p.key === ev.bi)?.value ?? 0;
+        return sum + point * ev.count;
       }, 0);
 
       state.players = state.players.map((p) => {
         if (loserIds.includes(p.id))
-          return { ...p, score: p.score - totalPenalty };
+          return { ...p, score: p.score - totalPoints };
         if (p.id === state.currentPlayerId)
-          return { ...p, score: p.score + totalPenalty };
+          return { ...p, score: p.score + totalPoints };
         return p;
       });
 
-      state.history.push({
+      // Lịch sử mới nhất lên đầu
+      state.history.unshift({
+        id: crypto.randomUUID(),
         currentPlayerId: state.currentPlayerId,
         loserIds,
-        penaltyKeys,
-        totalPoints: totalPenalty,
+        events,
+        totalPoints,
+        createdAt: Date.now(),
       });
 
       saveState(state);
     },
+
     undo(state) {
-      const last = state.history.pop();
+      const last = state.history.shift();
       if (!last) return;
 
       state.players = state.players.map((p) => {
@@ -142,14 +152,15 @@ const gameSlice = createSlice({
 
       saveState(state);
     },
+
     undoToIndex(state, action: PayloadAction<number>) {
       const index = action.payload;
       if (index < 0 || index >= state.history.length) return;
 
       state.players = state.players.map((p) => ({ ...p, score: 0 }));
 
-      for (let i = 0; i < index; i++) {
-        const entry = state.history[i];
+      const remain = state.history.slice(index + 1).reverse();
+      for (const entry of remain) {
         state.players = state.players.map((p) => {
           if (entry.loserIds.includes(p.id))
             return { ...p, score: p.score - entry.totalPoints };
@@ -159,20 +170,14 @@ const gameSlice = createSlice({
         });
       }
 
-      state.history = state.history.slice(0, index);
+      state.history = state.history.slice(index + 1);
       saveState(state);
     },
-    resetGame(state) {
-      state.players = state.players.map((p) => ({ ...p, score: 0 }));
-      state.currentPlayerId = state.players[0]?.id || 0;
-      state.history = [];
-      saveState(state);
-    },
+
     resetAll(state) {
       state.players = [];
       state.currentPlayerId = 0;
       state.history = [];
-      state.round = 1;
       state.penaltyPoints = [...initialState.penaltyPoints];
       localStorage.removeItem(STORAGE_KEY);
     },
@@ -181,13 +186,11 @@ const gameSlice = createSlice({
 
 export const {
   setPlayers,
-  setPenaltyPoints,
-  nextRound,
   setCurrentPlayer,
+  setPenaltyPoints,
   applyPenalty,
   undo,
   undoToIndex,
-  resetGame,
   resetAll,
 } = gameSlice.actions;
 
