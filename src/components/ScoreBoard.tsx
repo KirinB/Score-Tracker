@@ -116,7 +116,7 @@ const ScoreBoard: React.FC = () => {
 
   return (
     <div className="pt-[env(safe-area-inset-top)] px-2 md:w-2/3 md:mx-auto">
-      <Card className="my-20">
+      <Card className="mt-6">
         <CardHeader className="flex flex-row justify-between items-center">
           <CardTitle>🎱 Tính điểm đền</CardTitle>
           <ScoreHistory />
