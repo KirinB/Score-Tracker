@@ -23,7 +23,7 @@ export type HistoryEntry = {
   currentPlayerId: number;
   loserIds: number[];
   events: PenaltyEvent[];
-  totalPoints: number;
+  pointPerLoser: number;
   createdAt: number;
 };
 
@@ -50,15 +50,12 @@ const initialState: GameState = {
   ],
 };
 
-/** Load state an toàn, tự reset nếu dữ liệu cũ hoặc lỗi */
 function loadState(): GameState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return initialState;
 
     const parsed = JSON.parse(raw) as Partial<GameState>;
-
-    // Kiểm tra version
     if (parsed.version !== CURRENT_VERSION) {
       localStorage.removeItem(STORAGE_KEY);
       return initialState;
@@ -111,27 +108,31 @@ const gameSlice = createSlice({
       action: PayloadAction<{ loserIds: number[]; events: PenaltyEvent[] }>
     ) {
       const { loserIds, events } = action.payload;
-      const totalPoints = events.reduce((sum, ev) => {
+
+      const pointPerLoser = events.reduce((sum, ev) => {
         const point =
           state.penaltyPoints.find((p) => p.key === ev.bi)?.value ?? 0;
         return sum + point * ev.count;
       }, 0);
 
+      const totalGain = pointPerLoser * loserIds.length;
+
       state.players = state.players.map((p) => {
         if (loserIds.includes(p.id))
-          return { ...p, score: p.score - totalPoints };
+          return { ...p, score: p.score - pointPerLoser };
+
         if (p.id === state.currentPlayerId)
-          return { ...p, score: p.score + totalPoints };
+          return { ...p, score: p.score + totalGain };
+
         return p;
       });
 
-      // Lịch sử mới nhất lên đầu
       state.history.unshift({
         id: crypto.randomUUID(),
         currentPlayerId: state.currentPlayerId,
         loserIds,
         events,
-        totalPoints,
+        pointPerLoser,
         createdAt: Date.now(),
       });
 
@@ -142,11 +143,15 @@ const gameSlice = createSlice({
       const last = state.history.shift();
       if (!last) return;
 
+      const totalGain = last.pointPerLoser * last.loserIds.length;
+
       state.players = state.players.map((p) => {
         if (last.loserIds.includes(p.id))
-          return { ...p, score: p.score + last.totalPoints };
+          return { ...p, score: p.score + last.pointPerLoser };
+
         if (p.id === last.currentPlayerId)
-          return { ...p, score: p.score - last.totalPoints };
+          return { ...p, score: p.score - totalGain };
+
         return p;
       });
 
@@ -160,12 +165,17 @@ const gameSlice = createSlice({
       state.players = state.players.map((p) => ({ ...p, score: 0 }));
 
       const remain = state.history.slice(index + 1).reverse();
+
       for (const entry of remain) {
+        const totalGain = entry.pointPerLoser * entry.loserIds.length;
+
         state.players = state.players.map((p) => {
           if (entry.loserIds.includes(p.id))
-            return { ...p, score: p.score - entry.totalPoints };
+            return { ...p, score: p.score - entry.pointPerLoser };
+
           if (p.id === entry.currentPlayerId)
-            return { ...p, score: p.score + entry.totalPoints };
+            return { ...p, score: p.score + totalGain };
+
           return p;
         });
       }

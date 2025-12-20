@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { undoToIndex } from "@/stores/slices/game.slice";
 import { renderEventText } from "@/lib/helper";
 
-const PAGE_SIZE = 5; // số lượt mỗi trang
+const PAGE_SIZE = 5;
 
 const ScoreHistory: React.FC = () => {
   const dispatch = useDispatch();
@@ -42,7 +42,6 @@ const ScoreHistory: React.FC = () => {
 
   const totalPages = Math.ceil(history.length / PAGE_SIZE);
 
-  // === sort DESC theo createdAt để lượt mới nhất lên đầu ===
   const sortedHistory = [...history].sort((a, b) => b.createdAt - a.createdAt);
   const start = page * PAGE_SIZE;
   const end = start + PAGE_SIZE;
@@ -52,7 +51,6 @@ const ScoreHistory: React.FC = () => {
     const entry = pageHistory[index];
     if (!entry) return;
 
-    // tìm index gốc trong history
     const originalIndex = history.findIndex((h) => h.id === entry.id);
     if (originalIndex === -1) return;
 
@@ -95,7 +93,6 @@ const ScoreHistory: React.FC = () => {
               .map((id) => players.find((p) => p.id === id)?.name ?? "??")
               .join(", ");
 
-            // # tính theo sortedHistory
             const number = sortedHistory.length - (page * PAGE_SIZE + i);
 
             return (
@@ -132,7 +129,7 @@ const ScoreHistory: React.FC = () => {
             >
               {"<"} Trước
             </Button>
-            <span className="flex items-center gap-1">
+            <span>
               {page + 1}/{totalPages}
             </span>
             <Button
