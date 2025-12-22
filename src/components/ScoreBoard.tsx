@@ -1,12 +1,12 @@
-import React, { useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "@/stores";
+import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 import {
   applyPenalty,
   resetAll,
-  undo,
   setCurrentPlayer,
+  undo,
 } from "@/stores/slices/game.slice";
 
 import { Button } from "@/components/ui/button";
@@ -28,11 +28,11 @@ import {
 import { toast } from "sonner";
 import ScoreHistory from "./ScoreHistory";
 
-import imgCue from "@/assets/cue.png";
 import imgBi3 from "@/assets/bi3.png";
 import imgBi6 from "@/assets/bi6.png";
 import imgBi9 from "@/assets/bi9.png";
-import { Undo2, Undo2Icon } from "lucide-react";
+import imgCue from "@/assets/cue.png";
+import { Undo2 } from "lucide-react";
 
 /* ================= TYPES ================= */
 
