@@ -32,6 +32,7 @@ import imgCue from "@/assets/cue.png";
 import imgBi3 from "@/assets/bi3.png";
 import imgBi6 from "@/assets/bi6.png";
 import imgBi9 from "@/assets/bi9.png";
+import { Undo2, Undo2Icon } from "lucide-react";
 
 /* ================= TYPES ================= */
 
@@ -131,7 +132,7 @@ const ScoreBoard: React.FC = () => {
               className={`flex justify-between items-center px-3 py-2 rounded cursor-pointer
                 ${
                   p.id === currentPlayerId
-                    ? "border-2 border-blue-500 bg-blue-50 font-bold"
+                    ? "border-2 border-blue-500 bg-blue-50 dark:bg-slate-600 font-bold"
                     : "border"
                 }`}
             >
@@ -141,7 +142,7 @@ const ScoreBoard: React.FC = () => {
                   <img src={imgCue} className="w-5 h-5" />
                 )}
               </div>
-              <span>{p.score}</span>
+              <span>{p.score} điểm</span>
             </div>
           ))}
 
@@ -204,7 +205,7 @@ const ScoreBoard: React.FC = () => {
           {/* ===== ACTION ===== */}
           <div className="flex gap-2">
             <Button
-              className="flex-1"
+              className="flex-1 flex gap-2 items-center justify-center"
               variant="outline"
               disabled={history.length === 0}
               onClick={() => {
@@ -212,7 +213,8 @@ const ScoreBoard: React.FC = () => {
                 toast.success("Hoàn tác");
               }}
             >
-              Undo
+              <Undo2 />
+              <p>Hoàn tác</p>
             </Button>
 
             <Button

@@ -1,9 +1,11 @@
 import { configureStore } from "@reduxjs/toolkit";
 import gameReducer from "@/stores/slices/game.slice";
+import themeReducer from "@/stores/slices/theme.slice";
 
 export const store = configureStore({
   reducer: {
     game: gameReducer,
+    theme: themeReducer,
   },
 });
 
