@@ -27,7 +27,7 @@ const BiBadge = ({ bi, count }: { bi: number; count: number }) => {
   const colors: Record<number, string> = {
     3: "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]",
     6: "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]",
-    9: "bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.5)]",
+    9: "bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.5)] text-black",
   };
   return (
     <span
@@ -36,7 +36,7 @@ const BiBadge = ({ bi, count }: { bi: number; count: number }) => {
         colors[bi]
       )}
     >
-      {bi} × {count}
+      Bi {bi} × {count}
     </span>
   );
 };
@@ -46,7 +46,9 @@ const ScoreHistory: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(0);
 
-  const { players, history } = useSelector((state: RootState) => state.game);
+  const { players, history, penaltyPoints } = useSelector(
+    (state: RootState) => state.game
+  );
   const { isMinimal } = useSelector((state: RootState) => state.theme);
 
   const sortedHistory = [...history].sort((a, b) => b.createdAt - a.createdAt);
@@ -97,11 +99,8 @@ const ScoreHistory: React.FC = () => {
                 .join(", ");
               const displayIndex = history.length - (page * PAGE_SIZE + i);
 
-              // Tính tổng điểm lượt ăn này
-              const totalScore = h.events.reduce(
-                (sum, ev) => sum + ev.bi * ev.count,
-                0
-              );
+              // Tổng điểm nhận được = (điểm mỗi người thua) * (số người thua)
+              const totalGain = h.pointPerLoser * h.loserIds.length;
 
               return (
                 <div
@@ -131,12 +130,20 @@ const ScoreHistory: React.FC = () => {
                     {/* Dòng 2: Danh sách bi và Tổng điểm */}
                     <div className="flex items-center gap-2">
                       <div className="flex flex-wrap gap-1">
-                        {h.events.map((ev, idx) => (
-                          <BiBadge key={idx} bi={ev.bi} count={ev.count} />
-                        ))}
+                        {h.events.map((ev, idx) => {
+                          // Lấy số lượng thực tế nhân với số người thua
+                          const displayCount = ev.count * h.loserIds.length;
+                          return (
+                            <BiBadge
+                              key={idx}
+                              bi={ev.bi}
+                              count={displayCount}
+                            />
+                          );
+                        })}
                       </div>
                       <span className="text-[11px] font-bold text-yellow-500 ml-1">
-                        (+{totalScore})
+                        (+{totalGain})
                       </span>
                     </div>
                   </div>
