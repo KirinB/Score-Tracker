@@ -33,34 +33,6 @@ const Setting = () => {
         </CardHeader>
 
         <CardContent className="space-y-8 py-6">
-          {/* Chế độ tối */}
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <Label
-                className="text-lg font-semibold cursor-pointer"
-                htmlFor="dark-mode"
-              >
-                Dark mode
-              </Label>
-              <p className="text-xs opacity-60">
-                Chuyển đổi giao diện Sáng/Tối
-              </p>
-            </div>
-            <Switch
-              id="dark-mode"
-              className={iosSwitchClass}
-              checked={theme === "dark"}
-              onCheckedChange={() => dispatch(toggleTheme())}
-            />
-          </div>
-
-          <div
-            className={cn(
-              "h-px w-full",
-              isMinimal ? "bg-slate-100 dark:bg-slate-800" : "bg-white/10"
-            )}
-          />
-
           {/* Chế độ Đơn giản (Minimal) */}
           <div className="flex items-center justify-between">
             <div className="space-y-1">
@@ -79,6 +51,44 @@ const Setting = () => {
               className={iosSwitchClass}
               checked={isMinimal}
               onCheckedChange={(checked) => dispatch(setIsMinimal(checked))}
+            />
+          </div>
+
+          <div
+            className={cn(
+              "h-px w-full",
+              isMinimal ? "bg-slate-100 dark:bg-slate-800" : "bg-white/10"
+            )}
+          />
+          {/* Chế độ tối */}
+          <div
+            className={cn(
+              "flex items-center justify-between transition-opacity duration-300",
+              !isMinimal && "opacity-40 select-none"
+            )}
+          >
+            <div className="space-y-1">
+              <Label
+                className={cn(
+                  "text-lg font-semibold",
+                  isMinimal ? "cursor-pointer" : "cursor-not-allowed"
+                )}
+                htmlFor="dark-mode"
+              >
+                Dark mode
+              </Label>
+              <p className="text-xs opacity-60">
+                {isMinimal
+                  ? "Chuyển đổi giao diện Sáng/Tối"
+                  : "Chỉ khả dụng ở giao diện đơn giản"}
+              </p>
+            </div>
+            <Switch
+              id="dark-mode"
+              className={iosSwitchClass}
+              checked={theme === "dark"}
+              onCheckedChange={() => dispatch(toggleTheme())}
+              disabled={!isMinimal}
             />
           </div>
         </CardContent>
