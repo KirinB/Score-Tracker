@@ -1,35 +1,46 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-
+import { useSelector } from "react-redux";
+import type { RootState } from "@/stores";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-bold transition-all disabled:pointer-events-none disabled:opacity-50 active:scale-95 outline-none",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        success:
-          "bg-emerald-600 text-white hover:bg-emerald-600/90 focus-visible:ring-emerald-500/30 dark:bg-emerald-500 dark:hover:bg-emerald-500/90",
-
+        // --- STYLE GỐC (Sẽ dùng khi minimal = true) ---
+        default:
+          "bg-primary text-primary-foreground shadow hover:bg-primary/90",
         destructive:
-          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
         outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
+          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        success: "bg-emerald-600 text-white hover:bg-emerald-700",
+
+        // --- STYLE BIDA (Sẽ ghi đè bằng class riêng khi minimal = false) ---
+        bida_default:
+          "bg-gradient-to-b from-[#f2c94c] to-[#e2b02a] text-[#3d2a15] shadow-[0_4px_0_0_#9c7b1a] hover:from-[#ffd666] active:shadow-none active:translate-y-[2px]",
+        bida_success:
+          "bg-gradient-to-b from-[#4ade80] to-[#16a34a] text-white shadow-[0_4px_0_0_#14532d] hover:from-[#86efac] active:shadow-none active:translate-y-[2px]",
+        bida_destructive:
+          "bg-gradient-to-b from-[#ef4444] to-[#991b1b] text-white shadow-[0_4px_0_0_#450a0a] hover:from-[#f87171] active:shadow-none active:translate-y-[2px]",
+        bida_outline:
+          "bg-[#2a4d40] border-2 border-[#3d6b5b] text-[#a8c5bb] hover:bg-[#3d6b5b] hover:text-white transition-colors shadow-none",
       },
       size: {
-        default: "h-10 px-6 has-[>svg]:px-3",
-        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
-        icon: "size-9",
-        "icon-sm": "size-8",
-        "icon-lg": "size-10",
+        default: "h-10 px-4 py-2", // Giảm chuẩn shadcn
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+        // Size riêng cho mode bida
+        bida_default: "h-12 px-6 rounded-xl",
+        bida_icon: "size-10 rounded-xl shadow-md",
       },
     },
     defaultVariants: {
@@ -51,12 +62,31 @@ function Button({
   }) {
   const Comp = asChild ? Slot : "button";
 
+  // Lấy trạng thái từ Redux
+  const isMinimal = useSelector((state: RootState) => state.theme.isMinimal);
+
+  // Logic chọn variant/size dựa trên mode
+  const finalVariant =
+    !isMinimal &&
+    ["default", "success", "destructive", "outline"].includes(variant as string)
+      ? `bida_${variant}`
+      : variant;
+
+  const finalSize =
+    !isMinimal && ["default", "icon"].includes(size as string)
+      ? `bida_${size}`
+      : size;
+
   return (
     <Comp
       data-slot="button"
-      data-variant={variant}
-      data-size={size}
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(
+        buttonVariants({
+          variant: finalVariant as any,
+          size: finalSize as any,
+          className,
+        })
+      )}
       {...props}
     />
   );

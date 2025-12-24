@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, Controller } from "react-hook-form";
@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import type { RootState } from "@/stores";
 
 import {
   setPlayers,
@@ -17,15 +19,14 @@ import {
 } from "@/stores/slices/game.slice";
 
 import { toast } from "sonner";
+import { Users, Settings2, PlayCircle } from "lucide-react";
 
-// --- Default Penalty Points
 const defaultPenaltyPoints: PenaltyPoint[] = [
   { key: 3, value: 1 },
   { key: 6, value: 2 },
   { key: 9, value: 3 },
 ];
 
-// --- Zod schema
 const PlayerFormSchema = z
   .object({
     playerCount: z.enum(["3", "4"]),
@@ -43,7 +44,7 @@ const PlayerFormSchema = z
       if (name.trim().length < 2) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Tên phải có ít nhất 2 ký tự",
+          message: "Tên ít nhất 2 ký tự",
           path: ["names", i],
         });
       }
@@ -54,6 +55,7 @@ type FormValues = z.infer<typeof PlayerFormSchema>;
 
 const PlayerForm: React.FC = () => {
   const dispatch = useDispatch();
+  const { isMinimal } = useSelector((state: RootState) => state.theme);
   const [playerCount, setPlayerCount] = useState<3 | 4>(3);
 
   const {
@@ -65,14 +67,11 @@ const PlayerForm: React.FC = () => {
     resolver: zodResolver(PlayerFormSchema),
     defaultValues: {
       playerCount: "3",
-      names: Array(4).fill(""),
+      names: ["", "", "", ""],
       penaltyPoints: defaultPenaltyPoints,
     },
     mode: "onSubmit",
   });
-
-  // const watchedNames = watch("names");
-  // const watchedPenaltyPoints = watch("penaltyPoints");
 
   useEffect(() => {
     const storedPoints = localStorage.getItem("penaltyPoints");
@@ -95,104 +94,158 @@ const PlayerForm: React.FC = () => {
     dispatch(setPlayers(players));
     dispatch(setPenaltyPoints(data.penaltyPoints));
     localStorage.setItem("penaltyPoints", JSON.stringify(data.penaltyPoints));
-    toast.success("Đã bắt đầu trò chơi!");
+    toast.success("Bắt đầu trận đấu!");
   };
 
-  console.log(errors);
-
   return (
-    <div className="pt-[env(safe-area-inset-top)] px-2 md:w-2/3 md:mx-auto">
-      <Card className="w-full mt-6">
-        <CardHeader>
-          <CardTitle>Chọn số người chơi & setup điểm</CardTitle>
+    <div className="px-3 pt-6 pb-10 md:w-2/3 md:mx-auto overflow-y-auto max-h-[100dvh]">
+      <Card
+        className={cn(
+          "rounded-[32px] border-none shadow-2xl transition-all duration-500 overflow-hidden",
+          isMinimal
+            ? "bg-white dark:bg-slate-900 shadow-slate-200 dark:shadow-none"
+            : "bg-gradient-to-b from-[#1a3d32] to-[#0d211a] border-2 border-[#2a4d40] text-white"
+        )}
+      >
+        <CardHeader
+          className={cn(
+            "pb-4",
+            !isMinimal && "bg-black/20 border-b border-white/5"
+          )}
+        >
+          <CardTitle className="flex items-center gap-2 text-xl uppercase tracking-tight">
+            <Users className="w-5 h-5" /> Thiết lập trận đấu
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <form onSubmit={handleSubmit(onSubmit)}>
-            {/* Chọn số người */}
-            <div className="flex space-x-2 mb-4">
-              <Button
-                type="button"
-                variant={playerCount === 3 ? "default" : "outline"}
-                className="flex-1"
-                onClick={() => {
-                  setPlayerCount(3);
-                  setValue("playerCount", "3");
-                }}
-              >
-                3 Người
-              </Button>
-              <Button
-                type="button"
-                variant={playerCount === 4 ? "default" : "outline"}
-                className="flex-1"
-                onClick={() => {
-                  setPlayerCount(4);
-                  setValue("playerCount", "4");
-                }}
-              >
-                4 Người
-              </Button>
+
+        <CardContent className="space-y-6 pt-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* CHỌN SỐ NGƯỜI */}
+            <div className="space-y-3">
+              <Label className="text-xs font-bold uppercase tracking-widest opacity-60 ml-1">
+                Số lượng cơ thủ
+              </Label>
+              <div className="flex p-1 gap-1 rounded-2xl bg-black/10 dark:bg-white/5 border border-white/5">
+                {[3, 4].map((num) => (
+                  <Button
+                    key={num}
+                    type="button"
+                    variant={playerCount === num ? "default" : "ghost"}
+                    className={cn(
+                      "flex-1 h-12 rounded-xl font-bold transition-all",
+                      playerCount === num
+                        ? "shadow-md"
+                        : "hover:bg-white/5 opacity-50"
+                    )}
+                    onClick={() => {
+                      setPlayerCount(num as 3 | 4);
+                      setValue("playerCount", String(num) as "3" | "4");
+                    }}
+                  >
+                    {num} Người
+                  </Button>
+                ))}
+              </div>
             </div>
 
-            {/* Tên người chơi */}
-            <div className="space-y-4">
-              {Array(playerCount)
-                .fill(0)
-                .map((_, i) => (
-                  <div key={i}>
-                    <Label>Người chơi {i + 1}</Label>
+            {/* NHẬP TÊN */}
+            <div className="space-y-3">
+              <Label className="text-xs font-bold uppercase tracking-widest opacity-60 ml-1">
+                Danh sách người chơi
+              </Label>
+              <div className="grid gap-3">
+                {Array(playerCount)
+                  .fill(0)
+                  .map((_, i) => (
+                    <div key={i} className="relative">
+                      <Controller
+                        control={control}
+                        name={`names.${i}`}
+                        render={({ field }) => (
+                          <div className="relative group">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-bold opacity-30">
+                              P{i + 1}
+                            </span>
+                            <Input
+                              {...field}
+                              placeholder={`Tên người chơi ${i + 1}`}
+                              className={cn(
+                                "h-12 pl-12 rounded-xl border-none transition-all",
+                                isMinimal
+                                  ? "bg-slate-100 dark:bg-slate-800 focus:ring-2 focus:ring-blue-500"
+                                  : "bg-white/5 focus:bg-white/10 text-white placeholder:text-white/20"
+                              )}
+                            />
+                          </div>
+                        )}
+                      />
+                      {errors.names?.[i] && (
+                        <p className="text-[10px] text-red-400 mt-1 ml-4 font-bold">
+                          {errors.names[i]?.message}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            </div>
+
+            {/* CÀI ĐẶT ĐIỂM */}
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center gap-2 mb-1">
+                <Settings2 className="w-4 h-4 opacity-50" />
+                <Label className="text-xs font-bold uppercase tracking-widest opacity-60">
+                  Quy định điểm số
+                </Label>
+              </div>
+              <div
+                className={cn(
+                  "grid grid-cols-3 gap-2 p-3 rounded-2xl",
+                  isMinimal ? "bg-slate-50 dark:bg-slate-800" : "bg-black/20"
+                )}
+              >
+                {defaultPenaltyPoints.map((p, i) => (
+                  <div key={p.key} className="flex flex-col items-center gap-2">
+                    <span className="text-[10px] font-bold opacity-50">
+                      Bi {p.key}
+                    </span>
                     <Controller
                       control={control}
-                      name={`names.${i}`}
+                      name={`penaltyPoints.${i}.value`}
                       render={({ field }) => (
                         <Input
                           {...field}
-                          placeholder={`Tên người chơi ${i + 1}`}
+                          type="number"
+                          className={cn(
+                            "h-10 text-center font-bold rounded-lg border-none",
+                            isMinimal
+                              ? "bg-white dark:bg-slate-700"
+                              : "bg-white/10 text-yellow-400"
+                          )}
+                          onChange={(e) =>
+                            field.onChange(parseInt(e.target.value) || 0)
+                          }
                         />
                       )}
                     />
-                    {errors.names?.[i] && (
-                      <p className="text-sm text-red-500 mt-1">
-                        {errors.names[i]?.message}
-                      </p>
-                    )}
                   </div>
                 ))}
+              </div>
             </div>
 
-            {/* Bi 3,6,9 */}
-            <div className="space-y-4 mt-4">
-              <Label>Setup điểm Bi 3,6,9</Label>
-              {defaultPenaltyPoints.map((p, i) => (
-                <div key={p.key} className="flex items-center space-x-2">
-                  <span>Bi {p.key}</span>
-                  <Controller
-                    control={control}
-                    name={`penaltyPoints.${i}.value`}
-                    render={({ field }) => (
-                      <Input
-                        {...field}
-                        type="number"
-                        className="w-20"
-                        min={0}
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value, 10);
-                          field.onChange(isNaN(val) ? 0 : val);
-                        }}
-                      />
-                    )}
-                  />
-                  <span>điểm</span>
-                </div>
-              ))}
-            </div>
-
-            <Button type="submit" className="w-full mt-4" variant="success">
-              Bắt đầu
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full mt-4 h-14 rounded-2xl text-lg font-black uppercase tracking-tighter"
+            >
+              <PlayCircle className="w-6 h-6 mr-2" /> Bắt đầu ngay
             </Button>
           </form>
         </CardContent>
       </Card>
+
+      <p className="mt-6 text-center text-[10px] opacity-40 uppercase tracking-[0.3em]">
+        Lưu ý: Điểm số sẽ được tự động lưu
+      </p>
     </div>
   );
 };
