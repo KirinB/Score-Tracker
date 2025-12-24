@@ -46,9 +46,7 @@ const ScoreHistory: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(0);
 
-  const { players, history, penaltyPoints } = useSelector(
-    (state: RootState) => state.game
-  );
+  const { players, history } = useSelector((state: RootState) => state.game);
   const { isMinimal } = useSelector((state: RootState) => state.theme);
 
   const sortedHistory = [...history].sort((a, b) => b.createdAt - a.createdAt);
