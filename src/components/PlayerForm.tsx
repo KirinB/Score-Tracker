@@ -98,13 +98,13 @@ const PlayerForm: React.FC = () => {
   };
 
   return (
-    <div className="px-3 pt-6 pb-10 md:w-2/3 md:mx-auto overflow-y-auto max-h-[100dvh]">
+    <div className="px-3 pt-6 pb-10 md:w-2/3 md:mx-auto overflow-y-auto max-h-dvh">
       <Card
         className={cn(
           "rounded-[32px] border-none shadow-2xl transition-all duration-500 overflow-hidden",
           isMinimal
             ? "bg-white dark:bg-slate-900 shadow-slate-200 dark:shadow-none"
-            : "bg-gradient-to-b from-[#1a3d32] to-[#0d211a] border-2 border-[#2a4d40] text-white"
+            : "bg-linear-to-b from-[#1a3d32] to-[#0d211a] border-2 border-[#2a4d40] text-white"
         )}
       >
         <CardHeader

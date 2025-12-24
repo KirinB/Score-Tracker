@@ -1,4 +1,12 @@
-import type { RootState } from "@/stores";
+import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  TrashIcon,
+  HistoryIcon,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { Button } from "./ui/button";
 import {
   Dialog,
   DialogTrigger,
@@ -8,144 +16,192 @@ import {
   DialogFooter,
   DialogClose,
 } from "./ui/dialog";
-import { TrashIcon, HistoryIcon } from "lucide-react";
-import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { Button } from "./ui/button";
 import { toast } from "sonner";
 import { undoToIndex } from "@/stores/slices/game.slice";
-import { renderEventText } from "@/lib/helper";
+import type { RootState } from "@/stores";
+import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 5;
+
+const BiBadge = ({ bi, count }: { bi: number; count: number }) => {
+  const colors: Record<number, string> = {
+    3: "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]",
+    6: "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]",
+    9: "bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.5)]",
+  };
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-black text-white ml-1 first:ml-0",
+        colors[bi]
+      )}
+    >
+      {bi} × {count}
+    </span>
+  );
+};
 
 const ScoreHistory: React.FC = () => {
   const dispatch = useDispatch();
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(0);
 
-  const gameState = useSelector((state: RootState) => state.game);
-
-  if (
-    !gameState ||
-    !Array.isArray(gameState.players) ||
-    !Array.isArray(gameState.history)
-  ) {
-    localStorage.removeItem("9bi_game_state");
-    return (
-      <div className="p-4 text-red-600 font-bold">
-        App đã được cập nhật. Vui lòng reload trang để bắt đầu lại.
-      </div>
-    );
-  }
-
-  const { players, history } = gameState;
-
-  const totalPages = Math.ceil(history.length / PAGE_SIZE);
+  const { players, history } = useSelector((state: RootState) => state.game);
+  const { isMinimal } = useSelector((state: RootState) => state.theme);
 
   const sortedHistory = [...history].sort((a, b) => b.createdAt - a.createdAt);
-  const start = page * PAGE_SIZE;
-  const end = start + PAGE_SIZE;
-  const pageHistory = sortedHistory.slice(start, end);
+  const totalPages = Math.ceil(history.length / PAGE_SIZE);
+  const pageHistory = sortedHistory.slice(
+    page * PAGE_SIZE,
+    (page + 1) * PAGE_SIZE
+  );
 
-  const handleDelete = (index: number) => {
-    const entry = pageHistory[index];
-    if (!entry) return;
-
-    const originalIndex = history.findIndex((h) => h.id === entry.id);
+  const handleDelete = (id: string) => {
+    const originalIndex = history.findIndex((h) => h.id === id);
     if (originalIndex === -1) return;
-
-    const winnerName =
-      players.find((p) => p.id === entry.currentPlayerId)?.name ?? "??";
-    const loserNames = entry.loserIds
-      .map((id) => players.find((p) => p.id === id)?.name ?? "??")
-      .join(", ");
-
-    if (
-      window.confirm(
-        `Bạn có chắc chắn muốn xóa lượt này?\nNgười được điểm: ${winnerName}\nNgười mất điểm: ${loserNames}`
-      )
-    ) {
+    if (window.confirm("Xóa lượt này và hoàn tác lại điểm số?")) {
       dispatch(undoToIndex(originalIndex));
-      toast.success("Đã xóa lượt ghi điểm");
+      toast.success("Đã hoàn tác");
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="icon">
-          <HistoryIcon />
+        <Button variant="outline" size="icon" className="rounded-xl">
+          <HistoryIcon className="size-5" />
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Lịch sử điểm</DialogTitle>
+      <DialogContent className="max-w-lg p-0 overflow-hidden flex flex-col">
+        {/* HEADER */}
+        <DialogHeader className="p-6 pb-2">
+          <DialogTitle className="flex items-center gap-2">
+            <HistoryIcon className="size-5 opacity-50" /> Lịch sử điểm
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-2 max-h-96 overflow-y-auto mt-2">
-          {history.length === 0 && <p>Chưa có lượt nào.</p>}
+        {/* CONTENT AREA */}
+        <div className="px-6 py-2 space-y-3 max-h-[50vh] overflow-y-auto flex-1">
+          {history.length === 0 ? (
+            <div className="py-20 text-center flex flex-col items-center gap-2 opacity-30">
+              <HistoryIcon className="size-10" />
+              <p className="text-sm font-medium">Chưa có lượt ghi điểm nào</p>
+            </div>
+          ) : (
+            pageHistory.map((h, i) => {
+              const winner =
+                players.find((p) => p.id === h.currentPlayerId)?.name ?? "??";
+              const losers = h.loserIds
+                .map((id) => players.find((p) => p.id === id)?.name ?? "??")
+                .join(", ");
+              const displayIndex = history.length - (page * PAGE_SIZE + i);
 
-          {pageHistory.map((h, i) => {
-            const losers =
-              players.find((p) => p.id === h.currentPlayerId)?.name ?? "??";
-            const winner = h.loserIds
-              .map((id) => players.find((p) => p.id === id)?.name ?? "??")
-              .join(", ");
+              // Tính tổng điểm lượt ăn này
+              const totalScore = h.events.reduce(
+                (sum, ev) => sum + ev.bi * ev.count,
+                0
+              );
 
-            const number = sortedHistory.length - (page * PAGE_SIZE + i);
-
-            return (
-              <div
-                key={h.id}
-                className="flex justify-between items-center border p-2 rounded"
-              >
-                <p className="text-sm leading-relaxed">
-                  #{number}: <strong>{winner}</strong> đền{" "}
-                  <strong>{losers}</strong>{" "}
-                  <span className="text-muted-foreground">
-                    ({renderEventText(h.events)})
-                  </span>
-                </p>
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  onClick={() => handleDelete(i)}
+              return (
+                <div
+                  key={h.id}
+                  className={cn(
+                    "flex justify-between items-center p-3 rounded-[18px] transition-all",
+                    isMinimal
+                      ? "bg-slate-50 border border-slate-100 dark:bg-slate-800"
+                      : "bg-white/5 border border-white/5"
+                  )}
                 >
-                  <TrashIcon />
-                </Button>
-              </div>
-            );
-          })}
+                  <div className="flex-1 space-y-1">
+                    {/* Dòng 1: Ai ăn ai */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold opacity-30">
+                        #{displayIndex}
+                      </span>
+                      <span className="font-bold text-sm text-emerald-400">
+                        {winner}
+                      </span>
+                      <span className="text-[10px] opacity-50 uppercase font-bold">
+                        ăn
+                      </span>
+                      <span className="font-medium text-sm">{losers}</span>
+                    </div>
+
+                    {/* Dòng 2: Danh sách bi và Tổng điểm */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap gap-1">
+                        {h.events.map((ev, idx) => (
+                          <BiBadge key={idx} bi={ev.bi} count={ev.count} />
+                        ))}
+                      </div>
+                      <span className="text-[11px] font-bold text-yellow-500 ml-1">
+                        (+{totalScore})
+                      </span>
+                    </div>
+                  </div>
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-red-400 hover:bg-red-500/10 shrink-0"
+                    onClick={() => handleDelete(h.id)}
+                  >
+                    <TrashIcon className="size-4" />
+                  </Button>
+                </div>
+              );
+            })
+          )}
         </div>
 
-        {totalPages > 1 && (
-          <div className="flex justify-center gap-2 mt-4">
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={page === 0}
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-            >
-              {"<"} Trước
-            </Button>
-            <span>
-              {page + 1}/{totalPages}
-            </span>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={page === totalPages - 1}
-              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-            >
-              Tiếp {">"}
-            </Button>
+        {/* FOOTER CỐ ĐỊNH */}
+        <DialogFooter
+          className={cn(
+            "p-4 mt-0 sm:justify-between items-center border-t gap-4",
+            isMinimal
+              ? "bg-slate-50/50 border-slate-100"
+              : "bg-black/20 border-white/5"
+          )}
+        >
+          <div className="flex items-center gap-3">
+            {totalPages > 1 && (
+              <>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="h-8 w-8 rounded-lg"
+                  disabled={page === 0}
+                  onClick={() => setPage((p) => p - 1)}
+                >
+                  <ChevronLeft className="size-4" />
+                </Button>
+                <span className="text-[10px] font-bold opacity-50 uppercase tracking-widest">
+                  {page + 1} / {totalPages}
+                </span>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="h-8 w-8 rounded-lg"
+                  disabled={page === totalPages - 1}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  <ChevronRight className="size-4" />
+                </Button>
+              </>
+            )}
           </div>
-        )}
 
-        <DialogFooter className="mt-2">
           <DialogClose asChild>
-            <Button variant="outline">Đóng</Button>
+            <Button
+              variant={isMinimal ? "secondary" : "ghost"}
+              className={cn(
+                "rounded-xl font-bold uppercase text-[10px] tracking-widest h-9 px-6 w-full",
+                !isMinimal && "bg-white/5 hover:bg-white/10 text-white"
+              )}
+            >
+              Đóng lại
+            </Button>
           </DialogClose>
         </DialogFooter>
       </DialogContent>

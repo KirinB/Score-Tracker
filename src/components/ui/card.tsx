@@ -14,7 +14,7 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
         // Style Minimal (Shadcn gốc)
         isMinimal
           ? "bg-card text-card-foreground border py-6 shadow-sm shadow-slate-200 dark:shadow-none"
-          : "bg-gradient-to-b from-[#1a3d32] to-[#0d211a] border-2 border-[#2a4d40] text-white py-0 overflow-hidden shadow-2xl",
+          : "bg-linear-to-b from-[#1a3d32] to-[#0d211a] border-2 border-[#2a4d40] text-white py-0 overflow-hidden shadow-2xl",
         className
       )}
       {...props}

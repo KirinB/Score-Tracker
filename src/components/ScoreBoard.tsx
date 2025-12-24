@@ -87,7 +87,7 @@ const ScoreBoard: React.FC = () => {
   return (
     <div
       className={cn(
-        "h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] px-2 md:w-112.5 md:mx-auto flex flex-col overflow-hidden transition-colors duration-300",
+        "h-dvh pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] px-2 md:w-112.5 md:mx-auto flex flex-col overflow-hidden transition-colors duration-300",
         isMinimal ? "bg-slate-50 dark:bg-slate-950" : "bg-[#07120e]"
       )}
     >
@@ -96,7 +96,7 @@ const ScoreBoard: React.FC = () => {
           "flex-1 flex flex-col rounded-[24px] overflow-hidden mb-2 transition-all duration-500",
           isMinimal
             ? "mt-4 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm"
-            : "mt-2 border-2 border-[#2a4d40] bg-gradient-to-b from-[#1a3d32] to-[#0d211a] shadow-2xl"
+            : "mt-2 border-2 border-[#2a4d40] bg-linear-to-b from-[#1a3d32] to-[#0d211a] shadow-2xl"
         )}
       >
         {/* HEADER */}

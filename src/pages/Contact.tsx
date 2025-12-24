@@ -16,7 +16,7 @@ const Contact = () => {
           "rounded-[24px] border-none shadow-xl transition-all duration-500 overflow-hidden",
           isMinimal
             ? "bg-white dark:bg-slate-900 shadow-slate-200 dark:shadow-none"
-            : "bg-gradient-to-b from-[#1a3d32] to-[#0d211a] border-2 border-[#2a4d40] text-white"
+            : "bg-linear-to-b from-[#1a3d32] to-[#0d211a] border-2 border-[#2a4d40] text-white"
         )}
       >
         <CardHeader

@@ -52,7 +52,7 @@ export function PlayerScoreRow({
     <div className={cn("mb-1.5 px-1 w-full")}>
       <div
         onClick={onClick}
-        className="relative p-[3px] rounded-lg transition-transform active:scale-[0.97] shadow-lg"
+        className="relative p-0.75 rounded-lg transition-transform active:scale-[0.97] shadow-lg"
         style={{ backgroundColor: "#5d3a1a" }}
       >
         <div className="absolute top-0 left-0 size-3 bg-[#121212] rounded-br-full z-10 border-b border-black/30" />
@@ -65,8 +65,8 @@ export function PlayerScoreRow({
             "relative w-full flex items-center px-4 overflow-hidden rounded-sm h-11 transition-all",
             size === "sm" && "h-9",
             active
-              ? "bg-gradient-to-r from-[#2f6b55] to-[#1a3d32] text-white"
-              : "bg-gradient-to-r from-slate-600 to-slate-700 text-slate-100",
+              ? "bg-linear-to-r from-[#2f6b55] to-[#1a3d32] text-white"
+              : "bg-linear-to-r from-slate-600 to-slate-700 text-slate-100",
             isNameOnly ? "justify-center" : "justify-between"
           )}
         >
