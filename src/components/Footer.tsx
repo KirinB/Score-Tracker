@@ -1,4 +1,4 @@
-import { Home, Settings, MessageCircle } from "lucide-react";
+import { Home, Settings, MessageCircle, TestTube2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const Footer = () => {
@@ -7,7 +7,7 @@ const Footer = () => {
 
   const items = [
     {
-      label: "App",
+      label: "Trang Chủ",
       icon: Home,
       path: "/",
     },
@@ -20,6 +20,11 @@ const Footer = () => {
       label: "Cài đặt",
       icon: Settings,
       path: "/settings",
+    },
+    {
+      label: "Test",
+      icon: TestTube2,
+      path: "/test-voice",
     },
   ];
 

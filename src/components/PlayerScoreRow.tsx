@@ -2,17 +2,27 @@ import { useSelector } from "react-redux";
 import type { RootState } from "@/stores";
 import { cn } from "@/lib/utils";
 import imgCue from "@/assets/cue.png";
+import AchievementBadge from "./AchievementBadge";
 
 interface PlayerScoreRowProps {
+  id?: number;
   name: string;
   score?: number;
   active?: boolean;
   showCue?: boolean;
   onClick?: () => void;
+  achievements?: {
+    topBi9Id: number;
+    maxTurnId: number;
+    topBi9Count: number;
+    maxTurnScore: number;
+  };
   size?: "default" | "sm";
 }
 
 export function PlayerScoreRow({
+  id,
+  achievements,
   name,
   score,
   active,
@@ -71,8 +81,20 @@ export function PlayerScoreRow({
           )}
         >
           <div className="flex items-center gap-2">
-            <span className="font-black text-sm uppercase">{name}</span>
-            {showCue && <img src={imgCue} className="size-4 rotate-45" />}
+            <span
+              className={cn(
+                "font-black text-sm uppercase transition-colors duration-200",
+                active
+                  ? "text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]" // Trắng nổi bật trên nền xanh
+                  : "text-slate-400" // Xám trầm trên nền xám đậm
+              )}
+            >
+              {name}
+            </span>
+            {id && achievements && (
+              <AchievementBadge playerId={id} achievements={achievements} />
+            )}
+            {showCue && <img src={imgCue} className="size-10 rotate-45" />}
           </div>
           {score !== undefined && (
             <div

@@ -8,6 +8,7 @@ import ScoreBoard from "./components/ScoreBoard";
 import Setting from "./pages/Setting";
 import { resetAll } from "./stores/slices/game.slice";
 import Contact from "./pages/Contact";
+import TestVoice from "./pages/TestVoice";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -68,6 +69,7 @@ const App = () => {
       {/* Setting */}
       <Route path="/settings" element={<Setting />} />
       <Route path="/contact" element={<Contact />} />
+      <Route path="/test-voice" element={<TestVoice />} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" />} />

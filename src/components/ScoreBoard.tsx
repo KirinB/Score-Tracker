@@ -1,5 +1,5 @@
 import type { RootState } from "@/stores";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import {
@@ -32,6 +32,7 @@ import imgBi9 from "@/assets/bi9.png";
 import { Undo2 } from "lucide-react";
 import { PlayerScoreRow } from "@/components/PlayerScoreRow";
 import { cn } from "@/lib/utils";
+import { getAchievements } from "@/lib/achievements";
 
 export type BiKey = 3 | 6 | 9;
 const BI_KEYS: readonly BiKey[] = [3, 6, 9] as const;
@@ -55,6 +56,8 @@ const ScoreBoard: React.FC = () => {
     9: 0,
   });
   const [loserIds, setLoserIds] = useState<number[]>([]);
+
+  const achievements = useMemo(() => getAchievements(history), [history]);
 
   const toggleLoser = (id: number) => {
     setLoserIds((prev) =>
@@ -87,7 +90,7 @@ const ScoreBoard: React.FC = () => {
   return (
     <div
       className={cn(
-        "h-dvh pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] px-2 md:w-112.5 md:mx-auto flex flex-col overflow-hidden transition-colors duration-300",
+        "pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] px-2 md:w-112.5 md:mx-auto flex flex-col overflow-hidden transition-colors duration-300",
         isMinimal ? "bg-slate-50 dark:bg-slate-950" : "bg-[#07120e]"
       )}
     >
@@ -114,7 +117,7 @@ const ScoreBoard: React.FC = () => {
               isMinimal ? "text-slate-800 dark:text-slate-100" : "text-white"
             )}
           >
-            <span>🎱</span> Tính điểm đền
+            <span>🎱</span> Tính điểm
           </h2>
           <ScoreHistory />
         </div>
@@ -129,6 +132,8 @@ const ScoreBoard: React.FC = () => {
                 score={p.score}
                 active={p.id === currentPlayerId}
                 showCue={p.id === currentPlayerId}
+                id={p.id}
+                achievements={achievements}
                 onClick={() => dispatch(setCurrentPlayer(p.id))}
               />
             ))}
@@ -226,7 +231,6 @@ const ScoreBoard: React.FC = () => {
                     key={p.id}
                     name={p.name}
                     active={loserIds.includes(p.id)}
-                    size="sm"
                     onClick={() => toggleLoser(p.id)}
                   />
                 ))}
