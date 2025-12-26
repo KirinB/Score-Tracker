@@ -48,7 +48,7 @@ const biImages: Record<BiKey, string> = {
 
 const ScoreBoard: React.FC = () => {
   const dispatch = useDispatch();
-  const { players, currentPlayerId, history } = useSelector(
+  const { players, currentPlayerId, history, penaltyPoints } = useSelector(
     (state: RootState) => state.game
   );
   const { isMinimal } = useSelector((state: RootState) => state.theme);
@@ -77,6 +77,44 @@ const ScoreBoard: React.FC = () => {
     setBiCounts({ 3: 0, 6: 0, 9: 0 });
   };
 
+  // const handleApply = () => {
+  //   // 1. Kiểm tra đầu vào
+  //   const events = BI_KEYS.filter((bi) => biCounts[bi] > 0).map((bi) => ({
+  //     bi,
+  //     count: biCounts[bi],
+  //   }));
+
+  //   if (loserIds.length === 0)
+  //     return toast.error(MESSAGES.VALIDATION.REQUIRED_LOSER);
+  //   if (events.length === 0)
+  //     return toast.error(MESSAGES.VALIDATION.REQUIRED_BALLS);
+
+  //   // 2. Tính toán thông tin để đọc (trước khi reset state)
+  //   const winner = players.find((p) => p.id === currentPlayerId);
+
+  //   // Tính tổng điểm cộng thêm: (Mức bi * Số lượng bi) * Số người đền
+  //   const pointsPerLoser = events.reduce((sum, e) => sum + e.bi * e.count, 0);
+  //   const totalEarned = pointsPerLoser * loserIds.length;
+  //   const newTotalScore = (winner?.score || 0) + totalEarned;
+
+  //   // 3. Thực thi Redux Action
+  //   dispatch(applyPenalty({ loserIds, events }));
+  //   toast.success(MESSAGES.SCORE_SUCCESS);
+
+  //   // 4. Xử lý giọng nói
+  //   // Hàm playVoice bên trong đã tự kiểm tra soundEnabled và isMinimal nên không cần bọc if ở đây
+  //   if (winner) {
+  //     const msg = VOICE_MESSAGES.ADD_SCORE(
+  //       winner.name,
+  //       totalEarned,
+  //       newTotalScore
+  //     );
+  //     playVoice(msg);
+  //   }
+
+  //   // 5. Reset UI
+  //   resetSelection();
+  // };
   const handleApply = () => {
     // 1. Kiểm tra đầu vào
     const events = BI_KEYS.filter((bi) => biCounts[bi] > 0).map((bi) => ({
@@ -89,12 +127,17 @@ const ScoreBoard: React.FC = () => {
     if (events.length === 0)
       return toast.error(MESSAGES.VALIDATION.REQUIRED_BALLS);
 
-    // 2. Tính toán thông tin để đọc (trước khi reset state)
+    // 2. Tính toán điểm dựa trên cấu hình penaltyPoints từ Redux
     const winner = players.find((p) => p.id === currentPlayerId);
 
-    // Tính tổng điểm cộng thêm: (Mức bi * Số lượng bi) * Số người đền
-    const pointsPerLoser = events.reduce((sum, e) => sum + e.bi * e.count, 0);
-    const totalEarned = pointsPerLoser * loserIds.length;
+    // TÍNH ĐIỂM CHUẨN: Lấy giá trị (value) từ penaltyPoints thay vì lấy số bi (key)
+    const pointPerLoser = events.reduce((sum, ev) => {
+      const config = penaltyPoints.find((p) => p.key === ev.bi);
+      const pointValue = config ? config.value : 0; // Bi 3 sẽ lấy 1, Bi 6 lấy 2...
+      return sum + pointValue * ev.count;
+    }, 0);
+
+    const totalEarned = pointPerLoser * loserIds.length;
     const newTotalScore = (winner?.score || 0) + totalEarned;
 
     // 3. Thực thi Redux Action
@@ -102,12 +145,11 @@ const ScoreBoard: React.FC = () => {
     toast.success(MESSAGES.SCORE_SUCCESS);
 
     // 4. Xử lý giọng nói
-    // Hàm playVoice bên trong đã tự kiểm tra soundEnabled và isMinimal nên không cần bọc if ở đây
     if (winner) {
       const msg = VOICE_MESSAGES.ADD_SCORE(
         winner.name,
-        totalEarned,
-        newTotalScore
+        totalEarned, // Bây giờ sẽ là "1" thay vì "3" nếu chọn 1 bi 3
+        newTotalScore // Tổng điểm mới chính xác
       );
       playVoice(msg);
     }
