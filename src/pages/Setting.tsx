@@ -2,7 +2,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useDispatch, useSelector } from "react-redux";
-import { toggleTheme, setIsMinimal } from "@/stores/slices/theme.slice";
+import {
+  toggleTheme,
+  setIsMinimal,
+  setSoundEnabled,
+} from "@/stores/slices/theme.slice";
 import type { RootState } from "@/stores";
 import { cn } from "@/lib/utils";
 import FooterContact from "@/components/ui/FooterContact";
@@ -11,8 +15,10 @@ const Setting = () => {
   const dispatch = useDispatch();
   const theme = useSelector((state: RootState) => state.theme.mode);
   const isMinimal = useSelector((state: RootState) => state.theme.isMinimal);
+  const soundEnabled = useSelector(
+    (state: RootState) => state.theme.soundEnabled
+  );
 
-  // Class style cho Switch giống iPhone
   const iosSwitchClass =
     "scale-125 data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-gray-300 dark:data-[state=unchecked]:bg-slate-700 transition-all duration-300";
 
@@ -33,7 +39,7 @@ const Setting = () => {
         </CardHeader>
 
         <CardContent className="space-y-8 py-6">
-          {/* Chế độ Đơn giản (Minimal) */}
+          {/* Chế độ Đơn giản */}
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <Label
@@ -60,7 +66,8 @@ const Setting = () => {
               isMinimal ? "bg-slate-100 dark:bg-slate-800" : "bg-white/10"
             )}
           />
-          {/* Chế độ tối */}
+
+          {/* Chế độ Dark mode (Chỉ bật khi là Minimal) */}
           <div
             className={cn(
               "flex items-center justify-between transition-opacity duration-300",
@@ -89,6 +96,45 @@ const Setting = () => {
               checked={theme === "dark"}
               onCheckedChange={() => dispatch(toggleTheme())}
               disabled={!isMinimal}
+            />
+          </div>
+
+          <div
+            className={cn(
+              "h-px w-full",
+              isMinimal ? "bg-slate-100 dark:bg-slate-800" : "bg-white/10"
+            )}
+          />
+
+          {/* Âm thanh trọng tài (Chỉ bật khi KHÔNG PHẢI Minimal) */}
+          <div
+            className={cn(
+              "flex items-center justify-between transition-opacity duration-300",
+              isMinimal && "opacity-40 select-none"
+            )}
+          >
+            <div className="space-y-1">
+              <Label
+                className={cn(
+                  "text-lg font-semibold",
+                  !isMinimal ? "cursor-pointer" : "cursor-not-allowed"
+                )}
+                htmlFor="sound-mode"
+              >
+                Âm thanh thông báo
+              </Label>
+              <p className="text-xs opacity-60">
+                {!isMinimal
+                  ? "Bật/Tắt giọng nói trọng tài ảo"
+                  : "Không hỗ trợ ở giao diện đơn giản"}
+              </p>
+            </div>
+            <Switch
+              id="sound-mode"
+              className={iosSwitchClass}
+              checked={soundEnabled}
+              onCheckedChange={(checked) => dispatch(setSoundEnabled(checked))}
+              disabled={isMinimal}
             />
           </div>
         </CardContent>

@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { undoToIndex } from "@/stores/slices/game.slice";
 import type { RootState } from "@/stores";
 import { cn } from "@/lib/utils";
+import { MESSAGES } from "@/const/message";
 
 const PAGE_SIZE = 5;
 
@@ -59,9 +60,9 @@ const ScoreHistory: React.FC = () => {
   const handleDelete = (id: string) => {
     const originalIndex = history.findIndex((h) => h.id === id);
     if (originalIndex === -1) return;
-    if (window.confirm("Xóa lượt này và hoàn tác lại điểm số?")) {
+    if (window.confirm(MESSAGES.SCORE_UNDO_CONFIRM)) {
       dispatch(undoToIndex(originalIndex));
-      toast.success("Đã hoàn tác");
+      toast.success(MESSAGES.SCORE_UNDO);
     }
   };
 

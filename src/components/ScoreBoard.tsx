@@ -33,6 +33,9 @@ import { Undo2 } from "lucide-react";
 import { PlayerScoreRow } from "@/components/PlayerScoreRow";
 import { cn } from "@/lib/utils";
 import { getAchievements } from "@/lib/achievements";
+import { VOICE_MESSAGES } from "@/const/app";
+import { playVoice } from "@/lib/voiceUtils";
+import { MESSAGES } from "@/const/message";
 
 export type BiKey = 3 | 6 | 9;
 const BI_KEYS: readonly BiKey[] = [3, 6, 9] as const;
@@ -75,15 +78,41 @@ const ScoreBoard: React.FC = () => {
   };
 
   const handleApply = () => {
+    // 1. Kiểm tra đầu vào
     const events = BI_KEYS.filter((bi) => biCounts[bi] > 0).map((bi) => ({
       bi,
       count: biCounts[bi],
     }));
-    if (loserIds.length === 0) return toast.error("Chưa chọn người bị đền");
-    if (events.length === 0) return toast.error("Chưa chọn bi");
 
+    if (loserIds.length === 0)
+      return toast.error(MESSAGES.VALIDATION.REQUIRED_LOSER);
+    if (events.length === 0)
+      return toast.error(MESSAGES.VALIDATION.REQUIRED_BALLS);
+
+    // 2. Tính toán thông tin để đọc (trước khi reset state)
+    const winner = players.find((p) => p.id === currentPlayerId);
+
+    // Tính tổng điểm cộng thêm: (Mức bi * Số lượng bi) * Số người đền
+    const pointsPerLoser = events.reduce((sum, e) => sum + e.bi * e.count, 0);
+    const totalEarned = pointsPerLoser * loserIds.length;
+    const newTotalScore = (winner?.score || 0) + totalEarned;
+
+    // 3. Thực thi Redux Action
     dispatch(applyPenalty({ loserIds, events }));
-    toast.success("Đã ghi điểm");
+    toast.success(MESSAGES.SCORE_SUCCESS);
+
+    // 4. Xử lý giọng nói
+    // Hàm playVoice bên trong đã tự kiểm tra soundEnabled và isMinimal nên không cần bọc if ở đây
+    if (winner) {
+      const msg = VOICE_MESSAGES.ADD_SCORE(
+        winner.name,
+        totalEarned,
+        newTotalScore
+      );
+      playVoice(msg);
+    }
+
+    // 5. Reset UI
     resetSelection();
   };
 
@@ -283,7 +312,7 @@ const ScoreBoard: React.FC = () => {
               )}
             >
               <AlertDialogHeader>
-                <AlertDialogTitle>Reset điểm số?</AlertDialogTitle>
+                <AlertDialogTitle>Làm mới bảng điểm?</AlertDialogTitle>
                 <AlertDialogDescription
                   className={isMinimal ? "" : "text-gray-300"}
                 >

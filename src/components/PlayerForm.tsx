@@ -20,6 +20,7 @@ import {
 
 import { toast } from "sonner";
 import { Users, Settings2, PlayCircle } from "lucide-react";
+import { MESSAGES } from "@/const/message";
 
 const defaultPenaltyPoints: PenaltyPoint[] = [
   { key: 3, value: 1 },
@@ -34,7 +35,7 @@ const PlayerFormSchema = z
     penaltyPoints: z.array(
       z.object({
         key: z.union([z.literal(3), z.literal(6), z.literal(9)]),
-        value: z.number().min(0, "Điểm phải >=0"),
+        value: z.number().min(0, MESSAGES.VALIDATION.POINT_POSITIVE),
       })
     ),
   })
@@ -44,7 +45,7 @@ const PlayerFormSchema = z
       if (name.trim().length < 2) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Tên ít nhất 2 ký tự",
+          message: MESSAGES.VALIDATION.NAME_LENGTH,
           path: ["names", i],
         });
       }
@@ -94,7 +95,7 @@ const PlayerForm: React.FC = () => {
     dispatch(setPlayers(players));
     dispatch(setPenaltyPoints(data.penaltyPoints));
     localStorage.setItem("penaltyPoints", JSON.stringify(data.penaltyPoints));
-    toast.success("Bắt đầu trận đấu!");
+    toast.success(MESSAGES.START_GAME);
   };
 
   return (
